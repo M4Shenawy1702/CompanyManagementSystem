@@ -11,7 +11,7 @@ namespace Domain.Dtos.DepartmentDots
         public required string Description { get; set; }
         [Required]
         public required int ManagerId { get; set; }
-        //public required List<Employee> Employees { get; set; } = [];
+        public required List<string> EmployeesUsernames { get; set; } = [];
         public required bool IsDeleted { get; set; }
         public required DateTime EstablishedDate { get; set; }
     }

@@ -4,9 +4,9 @@ namespace Domain.IServices
 {
     public interface IPayrollService
     {
-        Task<string> CreateCheckoutSession(PayrollPaymentDto dto);
-        Task<string> CheckoutSuccess(string sessionId, int id);
-        Task<string> CheckoutFail(string sessionId, int id);
-        Task<IEnumerable<PayrollDto>> GetAllPayrollsAsync();
+        Task<PayrollDto> CreatePayroll(PayrollPaymentDto dto);
+        Task<IEnumerable<PayrollDto>> GetAllPayrolls();
+        Task<PayrollDto> GetPayrollById(int id);
+        Task DeletePayroll(int id);
     }
 }

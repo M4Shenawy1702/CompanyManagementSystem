@@ -1,5 +1,4 @@
 ﻿using Domain.Dtos.PayrollDtos;
-using Domain.Errors;
 using Domain.IServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,106 +14,31 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("payroll")]
-    public async Task<IActionResult> CreatePayrollSession([FromBody] PayrollPaymentDto dto)
+    public async Task<ActionResult<PayrollDto>> CreatePayrollSession([FromBody] PayrollPaymentDto dto)
     {
-        try
-        {
-            var sessionUrl = await _payrollService.CreateCheckoutSession(dto);
-            return Ok(new { Url = sessionUrl });
-        }
-        catch (ServiceException ex)
-        {
-            return StatusCode(ex.StatusCode, new
-            {
-                ex.Message,
-                ex.ErrorCode,
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                Message = "An unexpected error occurred while creating the session.",
-                Error = ex.Message
-            });
-        }
-    }
+        var result = await _payrollService.CreatePayroll(dto);
 
-    [HttpGet("success")]
-    public async Task<IActionResult> Success([FromQuery] string sessionId, [FromQuery] int id)
+        return Ok(result);
+    }
+    [HttpGet("payroll/{id}")]
+    public async Task<ActionResult<PayrollDto>> GetPayrollById(int id)
     {
-        try
-        {
-            var result = await _payrollService.CheckoutSuccess(sessionId, id);
-            return Ok(new { Message = result, SessionId = sessionId });
-        }
-        catch (ServiceException ex)
-        {
-            return StatusCode(ex.StatusCode, new
-            {
-                ex.Message,
-                ex.ErrorCode
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                Message = "An unexpected error occurred during success handling.",
-                Error = ex.Message
-            });
-        }
-    }
+        var result = await _payrollService.GetPayrollById(id);
 
-    [HttpGet("failed")]
-    public async Task<IActionResult> Failed([FromQuery] string sessionId, [FromQuery] int id)
+        return Ok(result);
+    }
+    [HttpDelete("payroll/{id}")]
+    public async Task<ActionResult<PayrollDto>> DeletePayroll(int id)
     {
-        try
-        {
-            var result = await _payrollService.CheckoutFail(sessionId, id);
-            return BadRequest(new { Message = result, SessionId = sessionId });
-        }
-        catch (ServiceException ex)
-        {
-            return StatusCode(ex.StatusCode, new
-            {
-                ex.Message,
-                ex.ErrorCode
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                Message = "An unexpected error occurred during failure handling.",
-                Error = ex.Message
-            });
-        }
-    }
+        var result = _payrollService.DeletePayroll(id);
 
+        return Ok(result);
+    }
     [HttpGet("payrolls")]
-    public async Task<IActionResult> GetAllPayrolls()
+    public async Task<ActionResult<IEnumerable<PayrollDto>>> GetAllPayrolls()
     {
-        try
-        {
-            var payrolls = await _payrollService.GetAllPayrollsAsync();
-            return Ok(payrolls);
-        }
-        catch (ServiceException ex)
-        {
-            return StatusCode(ex.StatusCode, new
-            {
-                ex.Message,
-                ex.ErrorCode
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                Message = "An unexpected error occurred while fetching payrolls.",
-                Error = ex.Message
-            });
-        }
+        var result = await _payrollService.GetAllPayrolls();
+
+        return Ok(result);
     }
 }

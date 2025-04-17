@@ -28,6 +28,8 @@ namespace Application.Services
 
         public async Task<DepartmentResultDto> AddDepartment(DepartmentDto Dto)
         {
+            var manager = await _unitOfWork.Employees.GetByIdAsync(Dto.ManagerId) ?? throw new NotFoundException("Manager not found.");
+
             if (await _unitOfWork.Departments.FindAsync(d => d.ManagerId == Dto.ManagerId && !d.IsDeleted) is not null)
                 throw new ServiceException(400, "The manager is already assigned to an existing department.", "MANAGER_ALREADY_ASSIGNED");
 
@@ -86,11 +88,12 @@ namespace Application.Services
 
         public async Task<DepartmentResultDto> ChangeDeptManager(Emp_DeptDto Dto, int DeptId)
         {
+            var employee = await _unitOfWork.Employees.GetByIdAsync(Dto.EmpId) ?? throw new NotFoundException("Employee not found.", "EMPLOYEE_NOT_FOUND");
+
             if (await _unitOfWork.Departments.FindAsync(d => d.ManagerId == Dto.EmpId && !d.IsDeleted) is not null)
                 throw new ServiceException(400, "Manager is already assigned to an existing department.", "MANAGER_ALREADY_ASSIGNED");
 
             var department = await _unitOfWork.Departments.GetByIdAsync(DeptId) ?? throw new NotFoundException("Department not found.", "DEPARTMENT_NOT_FOUND");
-            var employee = await _unitOfWork.Employees.GetByIdAsync(Dto.EmpId) ?? throw new NotFoundException("Employee not found.", "EMPLOYEE_NOT_FOUND");
 
             if (department.ManagerId != Dto.EmpId)
             {

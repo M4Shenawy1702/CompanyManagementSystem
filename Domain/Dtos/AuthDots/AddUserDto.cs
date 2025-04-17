@@ -4,13 +4,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Domain.Dtos.AuthDots
 
 {
-    public class RegisterDto
+    public class AddUserDto
     {
         public required IFormFile? ProfileImg { get; set; }
-        [Required, MaxLength(50)]
-        public required string FirstName { get; set; }
-        [Required, MaxLength(50)]
-        public required string LastName { get; set; }
         [EmailAddress]
         public required string Email { get; set; }
         public required string Password { get; set; }
@@ -21,5 +17,12 @@ namespace Domain.Dtos.AuthDots
         public Gender Gender { get; set; }
         public string? Address { get; set; }
         public string? JobTitle { get; set; }
+        public decimal Salary { get; set; }
+        public UserRoles Role { get; set; }
+    }
+    public enum UserRoles
+    {
+        Admin,
+        Employee,
     }
 }

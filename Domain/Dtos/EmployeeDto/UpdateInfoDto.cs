@@ -21,5 +21,6 @@ namespace Domain.Dtos.EmployeeDto
         public Gender Gender { get; set; }
         public string? Address { get; set; }
         public string? JobTitle { get; set; }
+        public decimal Salary { get; set; }
     }
 }

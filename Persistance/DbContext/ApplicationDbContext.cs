@@ -9,33 +9,34 @@ namespace Persistance.DbContext
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Department>()
-            .HasMany(d => d.Employees)
-            .WithOne(e => e.Department)
-            .HasForeignKey(e => e.DepartmentId);
+                .HasMany(d => d.Employees)
+                .WithOne(e => e.Department)
+                .HasForeignKey(e => e.DepartmentId);
 
             modelBuilder.Entity<Admin>()
-            .HasOne(a => a.User)
-            .WithOne(u => u.Admin)
-            .HasForeignKey<Admin>(a => a.UserId);
+                .HasOne(a => a.User)
+                .WithOne(u => u.Admin)
+                .HasForeignKey<Admin>(a => a.UserId);
 
             modelBuilder.Entity<Department>()
-            .HasOne(d => d.Manager)
-            .WithMany()
-            .HasForeignKey(d => d.ManagerId)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(d => d.Manager)
+                .WithMany()
+                .HasForeignKey(d => d.ManagerId)
+                .OnDelete(DeleteBehavior.Restrict); // Ensure this behavior is as expected
 
-            modelBuilder.Entity<Employee>()
-            .Property(e => e.Salary)
-            .HasColumnType("decimal(18, 4)");
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(e => e.Salary)
+                .HasColumnType("decimal(18, 4)");
 
             modelBuilder.Entity<Payroll>()
-            .Property(p => p.BaseSalary)
-            .HasColumnType("decimal(18, 4)");
+                .Property(p => p.BaseSalary)
+                .HasColumnType("decimal(18, 4)");
 
             modelBuilder.Entity<Payroll>()
                 .Property(p => p.Bonus)
@@ -49,20 +50,19 @@ namespace Persistance.DbContext
                 .Property(p => p.TotalSalary)
                 .HasColumnType("decimal(18, 4)");
 
-
-
-            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Payroll>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.Payrolls)
+                .HasForeignKey(p => p.UserId);
 
         }
+
         public DbSet<Admin> Admins { get; set; }
+        public DbSet<ApplicationUser> Users { get; set; }
         public DbSet<Department> Departments { get; set; }
-        public DbSet<Email> Emails { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Holiday> Holidays { get; set; }
         public DbSet<Payroll> Payrolls { get; set; }
         public DbSet<Project> Projects { get; set; }
-
-
-
     }
 }

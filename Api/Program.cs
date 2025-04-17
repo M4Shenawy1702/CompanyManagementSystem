@@ -1,8 +1,8 @@
 using Application.Services;
-using Bookify.Web.Core.Mapping;
 using Domain.Entities;
 using Domain.IRepositories;
 using Domain.IServices;
+using Domain.Mapping;
 using Domain.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +44,7 @@ internal static class Program
         builder.Services.AddScoped<IDepartmentService, DepartmentService>();
         builder.Services.AddScoped<IHolidayService, HolidayService>();
         builder.Services.AddScoped<IProjectService, ProjectService>();
-        builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+        builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IJWTTokenGenerator, JWTTokenGenerator>();
         builder.Services.AddScoped<IPayrollService, PayrollService>();
 
@@ -80,10 +80,10 @@ internal static class Program
         }
 
         // Custom Exception Middleware
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
+        //app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         // Optional: Static files if needed
-        // app.UseStaticFiles();
+        app.UseStaticFiles();
 
         app.UseHttpsRedirection();
 

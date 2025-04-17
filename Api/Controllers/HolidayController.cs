@@ -24,7 +24,7 @@ namespace Api.Controllers
             return Ok(Holiday);
         }
         [HttpGet("GetAllHolidaies")]
-        public async Task<ActionResult<IEnumerable<EmployeeResultDto>>> GetAllHoliday()
+        public async Task<ActionResult<IEnumerable<UserResultDto>>> GetAllHoliday()
         {
             var Companies = await _holidayService.GetAllHolidays();
 

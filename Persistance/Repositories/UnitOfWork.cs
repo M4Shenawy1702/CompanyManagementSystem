@@ -17,17 +17,17 @@ namespace Persistance.Repositories
 
 
         public IDepartmentRepository Departments { get; private set; }
-        public IEmployeeRepository Employees { get; private set; }
         public IProjectRepository Projects { get; private set; }
         public IHolidayRepository Holidays { get; private set; }
-        public IEmailRepository Emails { get; private set; }
         public IPayrollRepository Payrolls { get; private set; }
+        public IUserRepository Users { get; private set; }
+        public IGenericRepository<Employee> Employees { get; private set; }
+
 
         public UnitOfWork(ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             IOptions<JWT> jwt,
             IJWTTokenGenerator jwtTokenGenerator
-            //IEmailService emailService
             )
         {
             _context = context;
@@ -37,10 +37,10 @@ namespace Persistance.Repositories
 
             Projects = new ProjectRepository(_context);
             Departments = new DepartmentRepository(_context);
-            Employees = new EmployeeRepository(_context, _userManager, jwtTokenGenerator);
+            Users = new UserRepository(_context, _userManager, jwtTokenGenerator);
             Holidays = new HolidayRepository(_context);
-            Emails = new EmailRepository(_context);
             Payrolls = new PayrollRepository(_context);
+            Employees = new GenericRepository<Employee>(_context);
         }
         public void Dispose()
         {

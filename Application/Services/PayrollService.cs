@@ -6,180 +6,68 @@ using Domain.IRepositories;
 using Domain.IServices;
 using Domain.Settings;
 using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using ServiceStack.Stripe.Types;
-using Stripe.Checkout;
 
 namespace Application.Services
 {
     public class PayrollService : IPayrollService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly StripeSettings _stripeSettings;
         private readonly IMapper _mapper;
-        private readonly IServer _server;
 
         public PayrollService(IUnitOfWork unitOfWork, IOptions<StripeSettings> stripeSettings, IMapper mapper, IServer server)
         {
             _unitOfWork = unitOfWork;
-            _stripeSettings = stripeSettings.Value;
             _mapper = mapper;
-            _server = server;
         }
 
-        public async Task<string> CreateCheckoutSession(PayrollPaymentDto dto)
+        public async Task<PayrollDto> CreatePayroll(PayrollPaymentDto dto)
         {
-            var serverAddressesFeature = _server.Features.Get<IServerAddressesFeature>();
-            var thisApiUrl = serverAddressesFeature?.Addresses.FirstOrDefault();
+            var employee = await _unitOfWork.Users.FindAsync(e => e.Id == dto.EmployeeId);
+            if (employee == null)
+                throw new NotFoundException("Employee not found.", "EMPLOYEE_NOT_FOUND");
 
-            if (string.IsNullOrEmpty(thisApiUrl))
+            var totalSalary = employee.Salary + dto.Bonus - dto.Deduction;
+
+            var payroll = new Payroll
             {
-                throw new ServiceException(StatusCodes.Status500InternalServerError,
-                    "Unable to determine the server address for creating the payment session.",
-                    "SERVER_ADDRESS_NOT_FOUND");
-            }
-
-            return await GeneratePaymentUrl(thisApiUrl, dto);
-        }
-
-        public async Task<string> CheckoutSuccess(string sessionId, int id)
-        {
-            try
-            {
-                var session = await new SessionService().GetAsync(sessionId);
-
-                if (session?.Metadata == null)
-                    throw new ServiceException(StatusCodes.Status400BadRequest, "Invalid session metadata.", "INVALID_SESSION");
-
-                var payroll = ExtractPayrollFromSession(session, PaymentStatus.Paid);
-
-                await _unitOfWork.Payrolls.InsertAsync(payroll);
-                await _unitOfWork.CompleteAsync();
-
-                return "Payment successful and payroll recorded.";
-            }
-            catch (StripeException ex)
-            {
-                throw new ServiceException(StatusCodes.Status502BadGateway, "Stripe API error.", "STRIPE_ERROR", null, ex);
-            }
-            catch (Exception ex)
-            {
-                throw new ServiceException(StatusCodes.Status500InternalServerError, "Error processing successful payment.", "CHECKOUT_SUCCESS_ERROR", new Dictionary<string, string>
-            {
-                { "sessionId", sessionId },
-                { "exceptionMessage", ex.Message }
-            }, ex);
-            }
-        }
-
-        public async Task<string> CheckoutFail(string sessionId, int id)
-        {
-            try
-            {
-                var session = await new SessionService().GetAsync(sessionId);
-
-                if (session?.Metadata == null)
-                    throw new ServiceException(StatusCodes.Status400BadRequest, "Invalid session metadata.", "INVALID_SESSION");
-
-                var payroll = ExtractPayrollFromSession(session, PaymentStatus.Failed);
-
-                await _unitOfWork.Payrolls.InsertAsync(payroll);
-                await _unitOfWork.CompleteAsync();
-
-                return "Payment failed, payroll recorded as failed.";
-            }
-            catch (StripeException ex)
-            {
-                throw new ServiceException(StatusCodes.Status502BadGateway, "Stripe API error.", "STRIPE_ERROR", null, ex);
-            }
-            catch (Exception ex)
-            {
-                throw new ServiceException(StatusCodes.Status500InternalServerError, "Error processing failed payment.", "CHECKOUT_FAIL_ERROR", new Dictionary<string, string>
-            {
-                { "sessionId", sessionId },
-                { "exceptionMessage", ex.Message }
-            }, ex);
-            }
-        }
-
-        public async Task<IEnumerable<PayrollDto>> GetAllPayrollsAsync()
-        {
-            try
-            {
-                var payrolls = await _unitOfWork.Payrolls.GetAllAsync();
-                return _mapper.Map<IEnumerable<PayrollDto>>(payrolls);
-            }
-            catch (Exception ex)
-            {
-                throw new ServiceException(StatusCodes.Status500InternalServerError, "Failed to retrieve payrolls.", "GET_PAYROLLS_ERROR", null, ex);
-            }
-        }
-
-        private async Task<string> GeneratePaymentUrl(string thisApiUrl, PayrollPaymentDto dto)
-        {
-            var totalSalary = dto.BaseSalary + dto.Bonus - dto.Deduction;
-
-            var options = new SessionCreateOptions
-            {
-                SuccessUrl = $"{thisApiUrl}/api/payment/success?sessionId={{CHECKOUT_SESSION_ID}}&id={dto.EmployeeId}",
-                CancelUrl = $"{thisApiUrl}/api/payment/failed?sessionId={{CHECKOUT_SESSION_ID}}&id={dto.EmployeeId}",
-                LineItems = new List<SessionLineItemOptions>
-            {
-                new SessionLineItemOptions
-                {
-                    PriceData = new SessionLineItemPriceDataOptions
-                    {
-                        Currency = "usd",
-                        UnitAmountDecimal = (long)totalSalary * 100,
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = $"Payroll for Employee {dto.EmployeeId}"
-                        }
-                    },
-                    Quantity = 1
-                }
-            },
-                Mode = "payment",
-                Metadata = new Dictionary<string, string>
-            {
-                { "EmployeeId", dto.EmployeeId.ToString() },
-                { "BaseSalary", dto.BaseSalary.ToString() },
-                { "Bonus", dto.Bonus.ToString() },
-                { "Deduction", dto.Deduction.ToString() }
-            }
+                BaseSalary = employee.Salary,
+                Bonus = dto.Bonus,
+                Deduction = dto.Deduction,
+                TotalSalary = totalSalary,
+                PaymentDate = DateTime.UtcNow,
+                PaymentStatus = PaymentStatus.Paid,
+                UserId = employee.Id,
             };
 
-            var session = await new SessionService().CreateAsync(options);
-            return session.Url;
+            await _unitOfWork.Payrolls.InsertAsync(payroll);
+            await _unitOfWork.CompleteAsync();
+
+            var result = _mapper.Map<PayrollDto>(payroll);
+
+            return result ?? throw new ServiceException(StatusCodes.Status500InternalServerError, "Payroll not created.", "PAYROLL_CREATION_FAILED");
         }
 
-        private Payroll ExtractPayrollFromSession(Session session, PaymentStatus status)
+        public async Task<PayrollDto> GetPayrollById(int id)
         {
-            try
-            {
-                var employeeId = int.Parse(session.Metadata["EmployeeId"]);
-                var baseSalary = decimal.Parse(session.Metadata["BaseSalary"]);
-                var bonus = decimal.Parse(session.Metadata["Bonus"]);
-                var deduction = decimal.Parse(session.Metadata["Deduction"]);
-                var totalSalary = baseSalary + bonus - deduction;
-
-                return new Payroll
-                {
-                    EmployeeId = employeeId,
-                    BaseSalary = baseSalary,
-                    Bonus = bonus,
-                    Deduction = deduction,
-                    TotalSalary = totalSalary,
-                    PaymentDate = DateTime.UtcNow,
-                    PaymentStatus = status
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new ServiceException(StatusCodes.Status400BadRequest, "Failed to parse session metadata into payroll.", "PAYROLL_PARSE_ERROR", null, ex);
-            }
+            var payroll = await _unitOfWork.Payrolls.GetByIdAsync(id);
+            return _mapper.Map<PayrollDto>(payroll);
         }
+        public async Task DeletePayroll(int id)
+        {
+            var payroll = await _unitOfWork.Payrolls.GetByIdAsync(id);
+            if (payroll == null)
+                throw new NotFoundException("Payroll not found.", "PAYROLL_NOT_FOUND");
+
+            _unitOfWork.Payrolls.Delete(payroll);
+            await _unitOfWork.CompleteAsync();
+        }
+        public async Task<IEnumerable<PayrollDto>> GetAllPayrolls()
+        {
+            var payrolls = await _unitOfWork.Payrolls.FindAllWithIncludesAsync(["UserPayrolls.User"]);
+            return _mapper.Map<IEnumerable<PayrollDto>>(payrolls);
+        }
+
     }
 }

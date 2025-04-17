@@ -2,13 +2,11 @@
 
 namespace Domain.Dtos.EmployeeDto
 {
-    public class EmployeeResultDto
+    public class UserResultDto
     {
         public int Id { get; set; }
         public string? UserId { get; set; }
-        public byte[]? ProfileImg { get; set; }
-        public required string FirstName { get; set; }
-        public required string LastName { get; set; }
+        public string ProfileImg { get; set; }
         public int Age { get; set; }
         public string? PhoneNumber { get; set; }
         public Gender Gender { get; set; }

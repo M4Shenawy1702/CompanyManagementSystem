@@ -1,23 +1,32 @@
 ﻿using AutoMapper;
-using Domain.Dtos.AuthDots;
 using Domain.Dtos.Department;
 using Domain.Dtos.DepartmentDots;
-using Domain.Dtos.EmailDto;
 using Domain.Dtos.EmployeeDto;
 using Domain.Dtos.Holiday;
-using Domain.Dtos.PayrollDtos;
 using Domain.Dtos.ProjeectDots;
 using Domain.Entities;
 
-namespace Bookify.Web.Core.Mapping
+namespace Domain.Mapping
 {
     public class MappingProfile : Profile
     {
         public MappingProfile()
         {
+            //User
+            CreateMap<ApplicationUser, UserResultDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.Id : 0))
+            .ForMember(dest => dest.DepartmentId, opt => opt.MapFrom(src => src.Employee != null ? src.Employee.DepartmentId : null))
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id));
+
             // Department
             CreateMap<DepartmentDto, Department>();
             CreateMap<Department, DepartmentResultDto>();
+
+            CreateMap<Department, DepartmentResultDto>()
+            .ForMember(dest => dest.EmployeesUsernames,
+                opt => opt.MapFrom(src =>
+                    src.Employees.Select(e => e.User.UserName).ToList()));
+
 
             // Project
             CreateMap<ProjectDto, Project>();
@@ -25,20 +34,19 @@ namespace Bookify.Web.Core.Mapping
 
             // Employee
             CreateMap<EmployeeDto, Employee>();
-            CreateMap<Employee, EmployeeResultDto>();
-            CreateMap<RegisterDto, Employee>();
+            CreateMap<Employee, UserResultDto>();
             CreateMap<UpdateInfoDto, Employee>();
 
             // Holiday
             CreateMap<HolidayDto, Holiday>();
             CreateMap<Holiday, HolidayResultDto>();
 
-            // Email
-            CreateMap<EmailDto, Email>();
-            CreateMap<Email, EmailResultDto>();
-
             // Payroll
-            CreateMap<Payroll, PayrollDto>();
+            CreateMap<Payroll, PayrollDto>()
+                .ForMember(dest => dest.EmployeeId, opt => opt.MapFrom(src => src.UserId));
+
+            CreateMap<PayrollDto, Payroll>()
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(dto => dto.EmployeeId));
         }
     }
 }
