@@ -32,11 +32,6 @@ namespace Domain.Mapping
             CreateMap<ProjectDto, Project>();
             CreateMap<Project, ProjectResultDto>();
 
-            // Employee
-            CreateMap<EmployeeDto, Employee>();
-            CreateMap<Employee, UserResultDto>();
-            CreateMap<UpdateInfoDto, Employee>();
-
             // Holiday
             CreateMap<HolidayDto, Holiday>();
             CreateMap<Holiday, HolidayResultDto>();

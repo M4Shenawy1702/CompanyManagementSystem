@@ -28,7 +28,7 @@ namespace Persistance.DbContext
                 .HasOne(d => d.Manager)
                 .WithMany()
                 .HasForeignKey(d => d.ManagerId)
-                .OnDelete(DeleteBehavior.Restrict); // Ensure this behavior is as expected
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ApplicationUser>()
                 .Property(e => e.Salary)

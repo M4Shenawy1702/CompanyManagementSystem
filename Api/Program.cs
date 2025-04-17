@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Persistance.DbContext;
 using Persistance.Healper;
 using Persistance.Repositories;
-using Stripe;
 using System.Reflection;
 
 internal static class Program
@@ -30,10 +29,6 @@ internal static class Program
         // Add AutoMapper
         builder.Services.AddAutoMapper(Assembly.GetAssembly(typeof(MappingProfile)));
 
-        // Add Stripe configuration
-        builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
-        StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
-
         // Add JWT configuration
         builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 
@@ -48,7 +43,6 @@ internal static class Program
         builder.Services.AddScoped<IJWTTokenGenerator, JWTTokenGenerator>();
         builder.Services.AddScoped<IPayrollService, PayrollService>();
 
-        // Add Middleware Requirements
         builder.Services.AddHttpContextAccessor();
 
         // Add Controllers
@@ -58,7 +52,7 @@ internal static class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        // Add CORS (Optional if needed)
+        // Add CORS 
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
@@ -82,7 +76,6 @@ internal static class Program
         // Custom Exception Middleware
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-        // Optional: Static files if needed
         app.UseStaticFiles();
 
         app.UseHttpsRedirection();
