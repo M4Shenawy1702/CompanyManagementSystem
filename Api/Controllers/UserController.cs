@@ -14,32 +14,32 @@ namespace Api.Controllers
         {
             _employeeService = employeeService;
         }
-        [HttpGet("GetAllEmployees")]
-        public async Task<ActionResult<IEnumerable<UserResultDto>>> GetAllEmployees()
+        [HttpGet("GetAllUsers")]
+        public async Task<ActionResult<IEnumerable<UserResultDto>>> GetAllUsers()
         {
             var employees = await _employeeService.GetAll();
             return Ok(employees);
         }
-        [HttpGet("GetEmployeeById/{id}")]
-        public async Task<ActionResult<UserResultDto>> GetEmployeeById(string id)
+        [HttpGet("GetUserById/{id}")]
+        public async Task<ActionResult<UserResultDto>> GetUserById(string id)
         {
             var employee = await _employeeService.Get(id);
             return Ok(employee);
         }
-        [HttpPost("AddEmployee")]
-        public async Task<ActionResult<AuthModel>> AddEmployee([FromForm] AddUserDto Dto)
+        [HttpPost("AddUser")]
+        public async Task<ActionResult<AuthModel>> AddUser([FromForm] AddUserDto Dto)
         {
             var employee = await _employeeService.Add(Dto);
             return Ok(employee);
         }
-        [HttpPut("UpdateEmployee/{id}")]
-        public async Task<ActionResult<UserResultDto>> UpdateEmployee([FromForm] UpdateInfoDto Dto, string id)
+        [HttpPut("UpdateUser/{id}")]
+        public async Task<ActionResult<UserResultDto>> UpdateUser([FromForm] UpdateInfoDto Dto, string id)
         {
             var employee = await _employeeService.Update(Dto, id);
             return Ok(employee);
         }
-        [HttpPut("ToggleEmployee/{id}")]
-        public async Task<ActionResult<UserResultDto>> ToggleEmployee(int id)
+        [HttpPut("ToggleUser/{id}")]
+        public async Task<ActionResult<UserResultDto>> ToggleUser(int id)
         {
             var employee = await _employeeService.Toggle(id);
             return Ok(employee);

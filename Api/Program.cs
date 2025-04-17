@@ -80,7 +80,7 @@ internal static class Program
         }
 
         // Custom Exception Middleware
-        //app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         // Optional: Static files if needed
         app.UseStaticFiles();
